@@ -11,10 +11,10 @@ export default function HomeScreen({ onSelect, onOpenLeaderboard, playerName }) 
           ॥ संघ प्रार्थना ॥
         </div>
         <h1 className="spy-display" style={{ fontSize: 34, color: C.indigo, margin: "6px 0 2px" }}>
-          Sangha Prarthana Yatra
+          HSS Sangha Prarthana Yatra
         </h1>
         <p style={{ color: C.ash, opacity: 0.75, fontSize: 14, margin: 0 }}>
-          One stanza a week. Learn it, live it, quiz it.
+          Two stanzas a week. Learn it, live it, quiz it.
         </p>
       </div>
 
