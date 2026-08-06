@@ -1,0 +1,15 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /sangha-prarthana-scores/{docId} {
+      allow read: if true;
+      allow create: if request.resource.data.name is string
+                    && request.resource.data.name.size() < 60
+                    && request.resource.data.gana in ['Baal','Kishore','Kishori','Yuva','Yuvati']
+                    && request.resource.data.score is number
+                    && request.resource.data.total is number
+                    && request.resource.data.weekId is string;
+      allow update, delete: if false;
+    }
+  }
+}
