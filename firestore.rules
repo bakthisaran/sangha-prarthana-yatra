@@ -11,5 +11,11 @@ service cloud.firestore {
                     && request.resource.data.weekId is string;
       allow update, delete: if false;
     }
+
+    // Simple site-wide visit counter, e.g. meta/stats { visits: number }
+    match /meta/stats {
+      allow read: if true;
+      allow write: if true;
+    }
   }
 }
