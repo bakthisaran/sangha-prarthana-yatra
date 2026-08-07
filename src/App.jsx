@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useEffect } from "react";
 import { WEEKS } from "./data/weeks";
 import { loadPlayer } from "./lib/player";
+import { recordVisit } from "./lib/stats";
 import HomeScreen from "./components/HomeScreen";
 import LeaderboardScreen from "./components/LeaderboardScreen";
 import QuizScreen from "./components/QuizScreen";
@@ -15,6 +16,7 @@ export default function App() {
 
   useEffect(() => {
     setPlayerName(loadPlayer().name || "");
+    recordVisit();
   }, []);
 
   const activeWeek = WEEKS.find((w) => w.id === activeWeekId);
