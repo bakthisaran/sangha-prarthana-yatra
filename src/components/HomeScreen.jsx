@@ -1,9 +1,26 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Flame, Lock, ChevronRight, Trophy } from "lucide-react";
 import { C } from "../theme";
 import { WEEKS } from "../data/weeks";
+import { fetchVisitCount } from "../lib/stats";
+import { fetchAllScores, dedupeLatestAttempts, countUniquePlayers } from "../lib/scores";
 
 export default function HomeScreen({ onSelect, onOpenLeaderboard, playerName }) {
+  const [visitCount, setVisitCount] = useState(null);
+  const [playedCount, setPlayedCount] = useState(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchVisitCount().then((n) => !cancelled && setVisitCount(n));
+    fetchAllScores().then((raw) => {
+      if (cancelled) return;
+      setPlayedCount(countUniquePlayers(dedupeLatestAttempts(raw)));
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   return (
     <div className="spy-root" style={{ background: C.cream, minHeight: "100%", padding: "28px 20px 40px" }}>
       <div style={{ textAlign: "center", marginBottom: 6 }}>
@@ -16,6 +33,13 @@ export default function HomeScreen({ onSelect, onOpenLeaderboard, playerName }) 
         <p style={{ color: C.ash, opacity: 0.75, fontSize: 14, margin: 0 }}>
           Two stanzas a week. Learn it, live it, quiz it.
         </p>
+        {(visitCount !== null || playedCount !== null) && (
+          <p style={{ color: C.ash, opacity: 0.55, fontSize: 12, margin: "8px 0 0" }}>
+            {visitCount !== null ? `👣 ${visitCount} visits` : ""}
+            {visitCount !== null && playedCount !== null ? "  ·  " : ""}
+            {playedCount !== null ? `🔥 ${playedCount} have played` : ""}
+          </p>
+        )}
       </div>
 
       {playerName ? (
