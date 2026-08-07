@@ -18,3 +18,10 @@ export const GANA_COLORS = {
   Yuva: "#C1440E",
   Yuvati: "#B08A00",
 };
+
+export function memberLabel(gana, count) {
+  const plural = count !== 1;
+  if (gana === "Kishori" || gana === "Yuvati") return plural ? "sevikas" : "sevika";
+  if (gana === "Baal") return plural ? "baals & baalikas" : "baal & baalika";
+  return plural ? "swayamsevaks" : "swayamsevak";
+}
