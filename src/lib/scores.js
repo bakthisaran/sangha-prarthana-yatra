@@ -31,17 +31,19 @@ function toMillis(ts) {
   return 0;
 }
 
-// Writes are append-only (every submit creates a new doc), so before using
-// the data anywhere we collapse it to one row per person per week — their
-// most recent attempt only.
-export function dedupeLatestAttempts(entries) {
+// Writes are append-only (every submit creates a new doc). Retaking the
+// quiz is encouraged for practice, so we keep each person's BEST attempt
+// per week — never their most recent — meaning a retake can only help,
+// never accidentally lower, their leaderboard standing.
+export function dedupeBestAttempts(entries) {
   const byKey = new Map();
   entries.forEach((e) => {
     if (!e.name || !e.weekId) return;
     const key = `${e.weekId}::${e.name.toLowerCase()}`;
     const ts = toMillis(e.createdAt);
     const cur = byKey.get(key);
-    if (!cur || ts > cur._ts) byKey.set(key, { ...e, _ts: ts });
+    const better = !cur || e.score > cur.score || (e.score === cur.score && ts < cur._ts);
+    if (better) byKey.set(key, { ...e, _ts: ts });
   });
   return Array.from(byKey.values());
 }

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { Trophy } from "lucide-react";
 import { C, GANAS, GANA_COLORS, memberLabel } from "../theme";
-import { fetchAllScores, dedupeLatestAttempts, aggregateIndividual, computeTeamStats } from "../lib/scores";
+import { fetchAllScores, dedupeBestAttempts, aggregateIndividual, computeTeamStats } from "../lib/scores";
 
 export default function LeaderboardScreen({ onBack }) {
   const [mode, setMode] = useState("team"); // 'team' | 'individual'
@@ -11,7 +11,7 @@ export default function LeaderboardScreen({ onBack }) {
   useEffect(() => {
     let cancelled = false;
     fetchAllScores().then((raw) => {
-      if (!cancelled) setDedupedAll(dedupeLatestAttempts(raw));
+      if (!cancelled) setDedupedAll(dedupeBestAttempts(raw));
     });
     return () => {
       cancelled = true;

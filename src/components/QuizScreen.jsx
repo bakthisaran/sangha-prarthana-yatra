@@ -1,23 +1,26 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState } from "react";
 import { Check, X } from "lucide-react";
 import { C } from "../theme";
-import { shuffled } from "../lib/utils";
+import MatchRound from "./rounds/MatchRound";
+import OrderRound from "./rounds/OrderRound";
+import FillRound from "./rounds/FillRound";
+
+const ROUND_LABELS = {
+  match: "matching round",
+  order: "line-ordering round",
+  fill: "missing-word round",
+};
 
 export default function QuizScreen({ week, onFinish, onExit }) {
-  const totalSteps = week.questions.length + 1; // + match round
+  const totalSteps = week.questions.length + 1; // + second round
   const [step, setStep] = useState(0);
   const [mcqCorrect, setMcqCorrect] = useState(0);
   const [selected, setSelected] = useState(null);
   const [revealed, setRevealed] = useState(false);
 
-  const wordOrder = useMemo(() => shuffled(week.matchPairs, 17), [week.matchPairs]);
-  const [selectedEmoji, setSelectedEmoji] = useState(null);
-  const [matched, setMatched] = useState([]);
-  const [mistakes, setMistakes] = useState(0);
-  const [shakeId, setShakeId] = useState(null);
-
-  const isMatchStep = step === week.questions.length;
-  const q = !isMatchStep ? week.questions[step] : null;
+  const isSecondRound = step === week.questions.length;
+  const q = !isSecondRound ? week.questions[step] : null;
+  const roundType = week.roundType || "match";
 
   const chooseOption = (idx) => {
     if (revealed) return;
@@ -32,33 +35,9 @@ export default function QuizScreen({ week, onFinish, onExit }) {
     setStep((s) => s + 1);
   };
 
-  const tapEmoji = (id) => {
-    if (matched.includes(id)) return;
-    setSelectedEmoji(id);
+  const handleSecondRoundDone = (score) => {
+    onFinish(mcqCorrect + score);
   };
-  const tapWord = (id) => {
-    if (matched.includes(id) || !selectedEmoji) return;
-    if (selectedEmoji === id) {
-      setMatched((m) => [...m, id]);
-      setSelectedEmoji(null);
-    } else {
-      setMistakes((m) => m + 1);
-      setShakeId(id);
-      setTimeout(() => setShakeId(null), 300);
-      setSelectedEmoji(null);
-    }
-  };
-
-  const matchDone = matched.length === week.matchPairs.length;
-  const matchScore = matchDone ? Math.max(0, week.matchPairs.length - mistakes) : 0;
-
-  useEffect(() => {
-    if (isMatchStep && matchDone) {
-      const t = setTimeout(() => onFinish(mcqCorrect + matchScore), 700);
-      return () => clearTimeout(t);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [matchDone, isMatchStep]);
 
   return (
     <div className="spy-root" style={{ background: C.cream, minHeight: "100%", padding: "20px 18px 32px" }}>
@@ -85,7 +64,7 @@ export default function QuizScreen({ week, onFinish, onExit }) {
         WEEK {week.number} · STANZA {week.stanzaRange}
       </div>
 
-      {!isMatchStep ? (
+      {!isSecondRound ? (
         <div key={step} className="spy-pop-in" style={{ background: "#fff", borderRadius: 18, padding: 22, marginTop: 14, border: `1px solid ${C.creamDeep}` }}>
           <p style={{ fontSize: 17, color: C.indigo, fontWeight: 600, lineHeight: 1.4, marginBottom: 18 }}>{q.prompt}</p>
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -146,76 +125,16 @@ export default function QuizScreen({ week, onFinish, onExit }) {
                 cursor: "pointer",
               }}
             >
-              {step === week.questions.length - 1 ? "Continue to matching round" : "Next question"}
+              {step === week.questions.length - 1 ? `Continue to ${ROUND_LABELS[roundType]}` : "Next question"}
             </button>
           )}
         </div>
       ) : (
-        <div className="spy-pop-in" style={{ background: "#fff", borderRadius: 18, padding: 22, marginTop: 14, border: `1px solid ${C.creamDeep}` }}>
-          <p style={{ fontSize: 16, color: C.indigo, fontWeight: 600, marginBottom: 4 }}>Match each symbol to its word</p>
-          <p style={{ fontSize: 13, color: C.ash, opacity: 0.6, marginBottom: 16 }}>Tap a symbol, then tap the word it belongs to.</p>
-
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10, marginBottom: 20 }}>
-            {week.matchPairs.map((p) => {
-              const done = matched.includes(p.id);
-              const active = selectedEmoji === p.id;
-              return (
-                <button
-                  key={p.id}
-                  onClick={() => tapEmoji(p.id)}
-                  disabled={done}
-                  style={{
-                    fontSize: 28,
-                    aspectRatio: "1",
-                    borderRadius: 14,
-                    border: `2px solid ${done ? C.green : active ? C.kumkum : C.creamDeep}`,
-                    background: done ? "#eaf3ec" : active ? "#fbeae4" : C.cream,
-                    opacity: done ? 0.55 : 1,
-                    cursor: done ? "default" : "pointer",
-                  }}
-                >
-                  {p.emoji}
-                </button>
-              );
-            })}
-          </div>
-
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {wordOrder.map((p) => {
-              const done = matched.includes(p.id);
-              return (
-                <button
-                  key={p.id}
-                  onClick={() => tapWord(p.id)}
-                  disabled={done}
-                  className={shakeId === p.id ? "spy-shake" : ""}
-                  style={{
-                    padding: "10px 14px",
-                    borderRadius: 12,
-                    border: `2px solid ${done ? C.green : C.creamDeep}`,
-                    background: done ? "#eaf3ec" : "#fff",
-                    color: done ? C.green : C.ash,
-                    fontSize: 14,
-                    fontWeight: 600,
-                    textAlign: "left",
-                    cursor: done ? "default" : "pointer",
-                    display: "flex",
-                    justifyContent: "space-between",
-                  }}
-                >
-                  <span>{p.word}</span>
-                  {done && <Check size={16} />}
-                </button>
-              );
-            })}
-          </div>
-
-          {mistakes > 0 && !matchDone && (
-            <p style={{ fontSize: 12, color: C.kumkum, opacity: 0.7, marginTop: 12 }}>
-              {mistakes} mismatch{mistakes > 1 ? "es" : ""} so far — keep going!
-            </p>
-          )}
-        </div>
+        <>
+          {roundType === "match" && <MatchRound pairs={week.matchPairs} onDone={handleSecondRoundDone} />}
+          {roundType === "order" && <OrderRound lines={week.orderLines} onDone={handleSecondRoundDone} />}
+          {roundType === "fill" && <FillRound blanks={week.fillBlanks} onDone={handleSecondRoundDone} />}
+        </>
       )}
     </div>
   );

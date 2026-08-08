@@ -4,7 +4,7 @@ import { C } from "../theme";
 import { WEEKS } from "../data/weeks";
 import { STUDY } from "../data/study";
 import { fetchVisitCount } from "../lib/stats";
-import { fetchAllScores, dedupeLatestAttempts, countUniquePlayers } from "../lib/scores";
+import { fetchAllScores, dedupeBestAttempts, countUniquePlayers } from "../lib/scores";
 
 export default function HomeScreen({ onSelect, onOpenStudy, onOpenLeaderboard, playerName }) {
   const [visitCount, setVisitCount] = useState(null);
@@ -15,7 +15,7 @@ export default function HomeScreen({ onSelect, onOpenStudy, onOpenLeaderboard, p
     fetchVisitCount().then((n) => !cancelled && setVisitCount(n));
     fetchAllScores().then((raw) => {
       if (cancelled) return;
-      setPlayedCount(countUniquePlayers(dedupeLatestAttempts(raw)));
+      setPlayedCount(countUniquePlayers(dedupeBestAttempts(raw)));
     });
     return () => {
       cancelled = true;
