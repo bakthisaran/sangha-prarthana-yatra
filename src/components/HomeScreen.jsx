@@ -1,9 +1,27 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Flame, Lock, ChevronRight, Trophy } from "lucide-react";
 import { C } from "../theme";
 import { WEEKS } from "../data/weeks";
+import { STUDY } from "../data/study";
+import { fetchVisitCount } from "../lib/stats";
+import { fetchAllScores, dedupeLatestAttempts, countUniquePlayers } from "../lib/scores";
 
-export default function HomeScreen({ onSelect, onOpenLeaderboard, playerName }) {
+export default function HomeScreen({ onSelect, onOpenStudy, onOpenLeaderboard, playerName }) {
+  const [visitCount, setVisitCount] = useState(null);
+  const [playedCount, setPlayedCount] = useState(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchVisitCount().then((n) => !cancelled && setVisitCount(n));
+    fetchAllScores().then((raw) => {
+      if (cancelled) return;
+      setPlayedCount(countUniquePlayers(dedupeLatestAttempts(raw)));
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   return (
     <div className="spy-root" style={{ background: C.cream, minHeight: "100%", padding: "28px 20px 40px" }}>
       <div style={{ textAlign: "center", marginBottom: 6 }}>
@@ -16,6 +34,13 @@ export default function HomeScreen({ onSelect, onOpenLeaderboard, playerName }) 
         <p style={{ color: C.ash, opacity: 0.75, fontSize: 14, margin: 0 }}>
           Two stanzas a week. Learn it, live it, quiz it.
         </p>
+        {(visitCount !== null || playedCount !== null) && (
+          <p style={{ color: C.ash, opacity: 0.55, fontSize: 12, margin: "8px 0 0" }}>
+            {visitCount !== null ? `👣 ${visitCount} visits` : ""}
+            {visitCount !== null && playedCount !== null ? "  ·  " : ""}
+            {playedCount !== null ? `🔥 ${playedCount} have played` : ""}
+          </p>
+        )}
       </div>
 
       {playerName ? (
@@ -58,56 +83,97 @@ export default function HomeScreen({ onSelect, onOpenLeaderboard, playerName }) 
             borderRadius: 3,
           }}
         />
-        {WEEKS.map((w) => (
-          <div
-            key={w.id}
-            onClick={() => w.unlocked && onSelect(w.id)}
-            style={{
-              position: "relative",
-              display: "flex",
-              alignItems: "center",
-              gap: 16,
-              marginBottom: 26,
-              cursor: w.unlocked ? "pointer" : "default",
-            }}
-          >
+        {WEEKS.map((w) => {
+          const hasStudy = !!STUDY[w.id];
+          return (
             <div
-              className={w.unlocked ? "spy-flame-anim" : ""}
+              key={w.id}
               style={{
-                width: 56,
-                height: 56,
-                borderRadius: "50%",
-                flexShrink: 0,
+                position: "relative",
                 display: "flex",
                 alignItems: "center",
-                justifyContent: "center",
-                background: w.unlocked ? C.kumkum : "#fff",
-                border: `3px solid ${w.unlocked ? C.gold : C.creamDeep}`,
-                color: w.unlocked ? "#fff" : "#c9bfa0",
-                boxShadow: w.unlocked ? "0 4px 14px rgba(193,68,14,0.35)" : "none",
-                zIndex: 1,
+                gap: 16,
+                marginBottom: 26,
               }}
             >
-              {w.unlocked ? <Flame size={24} /> : <Lock size={18} />}
-            </div>
-            <div
-              style={{
-                flex: 1,
-                background: "#fff",
-                borderRadius: 14,
-                padding: "12px 16px",
-                border: `1px solid ${C.creamDeep}`,
-                opacity: w.unlocked ? 1 : 0.6,
-              }}
-            >
-              <div style={{ fontSize: 12, color: C.kumkum, fontWeight: 600, letterSpacing: 0.5 }}>
-                WEEK {w.number} · STANZA {w.stanzaRange}
+              <div
+                className={w.unlocked ? "spy-flame-anim" : ""}
+                style={{
+                  width: 56,
+                  height: 56,
+                  borderRadius: "50%",
+                  flexShrink: 0,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  background: w.unlocked ? C.kumkum : "#fff",
+                  border: `3px solid ${w.unlocked ? C.gold : C.creamDeep}`,
+                  color: w.unlocked ? "#fff" : "#c9bfa0",
+                  boxShadow: w.unlocked ? "0 4px 14px rgba(193,68,14,0.35)" : "none",
+                  zIndex: 1,
+                }}
+              >
+                {w.unlocked ? <Flame size={24} /> : <Lock size={18} />}
               </div>
-              <div style={{ fontSize: 16, color: C.indigo, fontWeight: 600, marginTop: 2 }}>{w.title}</div>
+              <div
+                style={{
+                  flex: 1,
+                  background: "#fff",
+                  borderRadius: 14,
+                  padding: "12px 16px",
+                  border: `1px solid ${C.creamDeep}`,
+                  opacity: w.unlocked || hasStudy ? 1 : 0.6,
+                }}
+              >
+                <div style={{ fontSize: 12, color: C.kumkum, fontWeight: 600, letterSpacing: 0.5 }}>
+                  WEEK {w.number} · STANZA {w.stanzaRange}
+                </div>
+                <div style={{ fontSize: 16, color: C.indigo, fontWeight: 600, marginTop: 2 }}>{w.title}</div>
+                <div style={{ display: "flex", gap: 14, marginTop: 8, alignItems: "center" }}>
+                  {hasStudy && (
+                    <button
+                      onClick={() => onOpenStudy(w.id)}
+                      style={{
+                        background: "none",
+                        border: "none",
+                        padding: 0,
+                        color: C.green,
+                        fontSize: 12,
+                        fontWeight: 700,
+                        cursor: "pointer",
+                      }}
+                    >
+                      📖 Study
+                    </button>
+                  )}
+                  {w.unlocked ? (
+                    <button
+                      onClick={() => onSelect(w.id)}
+                      style={{
+                        background: "none",
+                        border: "none",
+                        padding: 0,
+                        color: C.kumkum,
+                        fontSize: 12,
+                        fontWeight: 700,
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 2,
+                      }}
+                    >
+                      Take quiz <ChevronRight size={13} />
+                    </button>
+                  ) : hasStudy ? (
+                    <span style={{ fontSize: 11, color: C.ash, opacity: 0.5, fontWeight: 600 }}>
+                      Quiz opens on Friday 🔒
+                    </span>
+                  ) : null}
+                </div>
+              </div>
             </div>
-            {w.unlocked && <ChevronRight size={20} color={C.ash} style={{ opacity: 0.4, flexShrink: 0 }} />}
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       <p style={{ textAlign: "center", fontSize: 12, color: C.ash, opacity: 0.5, marginTop: 8 }}>

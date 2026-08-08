@@ -1,7 +1,9 @@
 import React, { useState, useCallback, useEffect } from "react";
 import { WEEKS } from "./data/weeks";
 import { loadPlayer } from "./lib/player";
+import { recordVisit } from "./lib/stats";
 import HomeScreen from "./components/HomeScreen";
+import StudyScreen from "./components/StudyScreen";
 import LeaderboardScreen from "./components/LeaderboardScreen";
 import QuizScreen from "./components/QuizScreen";
 import ResultsScreen from "./components/ResultsScreen";
@@ -15,6 +17,7 @@ export default function App() {
 
   useEffect(() => {
     setPlayerName(loadPlayer().name || "");
+    recordVisit();
   }, []);
 
   const activeWeek = WEEKS.find((w) => w.id === activeWeekId);
@@ -22,6 +25,11 @@ export default function App() {
   const openWeek = useCallback((id) => {
     setActiveWeekId(id);
     setScreen("quiz");
+  }, []);
+
+  const openStudy = useCallback((id) => {
+    setActiveWeekId(id);
+    setScreen("study");
   }, []);
 
   const finishQuiz = useCallback((s) => {
@@ -40,7 +48,15 @@ export default function App() {
     >
       <div className="spy-scroll" style={{ minHeight: "100vh", overflowY: "auto" }}>
         {screen === "home" && (
-          <HomeScreen onSelect={openWeek} onOpenLeaderboard={() => setScreen("leaderboard")} playerName={playerName} />
+          <HomeScreen
+            onSelect={openWeek}
+            onOpenStudy={openStudy}
+            onOpenLeaderboard={() => setScreen("leaderboard")}
+            playerName={playerName}
+          />
+        )}
+        {screen === "study" && activeWeek && (
+          <StudyScreen week={activeWeek} onBack={() => setScreen("home")} onStartQuiz={() => setScreen("quiz")} />
         )}
         {screen === "leaderboard" && <LeaderboardScreen onBack={() => setScreen("home")} />}
         {screen === "quiz" && activeWeek && (

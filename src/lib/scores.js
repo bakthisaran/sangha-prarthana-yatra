@@ -52,6 +52,11 @@ export function scoresForWeek(dedupedAll, weekId) {
     .sort((a, b) => b.score - a.score || a._ts - b._ts);
 }
 
+export function countUniquePlayers(dedupedAll) {
+  const names = new Set(dedupedAll.map((e) => e.name.toLowerCase()));
+  return names.size;
+}
+
 export function aggregateIndividual(dedupedAll) {
   const byName = new Map();
   dedupedAll.forEach((e) => {

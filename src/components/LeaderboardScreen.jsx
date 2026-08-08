@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { Trophy } from "lucide-react";
-import { C, GANAS, GANA_COLORS } from "../theme";
+import { C, GANAS, GANA_COLORS, memberLabel } from "../theme";
 import { fetchAllScores, dedupeLatestAttempts, aggregateIndividual, computeTeamStats } from "../lib/scores";
 
 export default function LeaderboardScreen({ onBack }) {
@@ -112,7 +112,7 @@ export default function LeaderboardScreen({ onBack }) {
                 <div style={{ width: `${t.pct}%`, height: "100%", background: GANA_COLORS[t.gana], borderRadius: 6 }} />
               </div>
               <div style={{ marginTop: 6, fontSize: 12, color: C.ash, opacity: 0.65 }}>
-                {t.members} {t.members === 1 ? "swayamsevak" : "swayamsevaks"} · {t.score}/{t.total} points combined
+                {t.members} {memberLabel(t.gana, t.members)} · {t.score}/{t.total} points combined
               </div>
             </div>
           ))}

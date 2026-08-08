@@ -49,7 +49,7 @@ export const WEEKS = [
       { id: "vishva", emoji: "🪷", word: "Vishvamangala", hint: "Universal auspiciousness" },
     ],
   },
-  { id: "week2", number: 2, stanzaRange: "3 – 4", title: "Coming next Friday", unlocked: false },
-  { id: "week3", number: 3, stanzaRange: "5 – 6", title: "Coming soon", unlocked: false },
-  { id: "week4", number: 4, stanzaRange: "7 – 8", title: "Coming soon", unlocked: false },
+  { id: "week2", number: 2, stanzaRange: "3 – 4", title: "Our Vow to Build Universal Dharma", unlocked: false },
+  { id: "week3", number: 3, stanzaRange: "5 – 6", title: "Steadfast in the Work of the Sangh", unlocked: false },
+  { id: "week4", number: 4, stanzaRange: "7 – 8", title: "Sacrifice, Service and Ultimate Glory", unlocked: false },
 ];
