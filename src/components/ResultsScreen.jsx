@@ -1,20 +1,34 @@
 import React, { useState, useEffect } from "react";
 import { Flame, Copy, RotateCcw, Trophy } from "lucide-react";
 import { C, GANAS } from "../theme";
-import { submitScore, fetchAllScores, dedupeLatestAttempts, scoresForWeek } from "../lib/scores";
+import { submitScore, fetchAllScores, dedupeBestAttempts, scoresForWeek } from "../lib/scores";
 import { loadPlayer, savePlayer } from "../lib/player";
+import { getAttemptsToday } from "../lib/attempts";
+
+const MAX_ATTEMPTS_PER_DAY = 3;
+
+function secondRoundLength(week) {
+  return (week.matchPairs || week.orderLines || week.fillBlanks || []).length;
+}
 
 function flameRating(score, total) {
   const pct = score / total;
-  if (pct >= 0.95) return { flames: 5, label: "Guru dakshina level!" };
-  if (pct >= 0.75) return { flames: 4, label: "Beautifully learnt." };
-  if (pct >= 0.55) return { flames: 3, label: "Good progress." };
-  if (pct >= 0.3) return { flames: 2, label: "Getting there." };
-  return { flames: 1, label: "Practice this stanza once more this week." };
+  if (pct >= 0.95)
+    return { flames: 5, label: "🎉 Shabaash! Guru Dakshina level — this stanza now truly lives in you." };
+  if (pct >= 0.75)
+    return { flames: 4, label: "🔥 Beautifully learnt — your smruti is strong. That's a true swayamsevak's dedication." };
+  if (pct >= 0.55)
+    return { flames: 3, label: "👍 Good progress — keep reciting it at the shakha and it'll be word-perfect soon." };
+  if (pct >= 0.3)
+    return { flames: 2, label: "💪 Getting there — every recitation on the ground builds the samskara. Keep going!" };
+  return {
+    flames: 1,
+    label: "🌱 Every swayamsevak begins somewhere — give it one more listen this week and come back with a fresh mind.",
+  };
 }
 
 export default function ResultsScreen({ week, score, onReplay, onHome }) {
-  const total = week.questions.length + week.matchPairs.length;
+  const total = week.questions.length + secondRoundLength(week);
   const { flames, label } = flameRating(score, total);
   const [name, setName] = useState("");
   const [gana, setGana] = useState("");
@@ -22,11 +36,13 @@ export default function ResultsScreen({ week, score, onReplay, onHome }) {
   const [saving, setSaving] = useState(false);
   const [board, setBoard] = useState([]);
   const [copied, setCopied] = useState(false);
+  const [attemptsToday, setAttemptsToday] = useState(0);
 
   useEffect(() => {
     const p = loadPlayer();
     setName(p.name || "");
     setGana(p.gana || "");
+    setAttemptsToday(getAttemptsToday(week.id));
   }, [week.id]);
 
   const submit = async () => {
@@ -35,7 +51,7 @@ export default function ResultsScreen({ week, score, onReplay, onHome }) {
     savePlayer(name.trim(), gana);
     await submitScore({ weekId: week.id, name: name.trim(), gana, score, total });
     const raw = await fetchAllScores();
-    const deduped = dedupeLatestAttempts(raw);
+    const deduped = dedupeBestAttempts(raw);
     setBoard(scoresForWeek(deduped, week.id));
     setSaved(true);
     setSaving(false);
@@ -179,25 +195,46 @@ export default function ResultsScreen({ week, score, onReplay, onHome }) {
       </button>
 
       <div style={{ display: "flex", gap: 10, marginTop: 14 }}>
-        <button
-          onClick={onReplay}
-          style={{
-            flex: 1,
-            padding: "12px",
-            borderRadius: 12,
-            border: `1px solid ${C.creamDeep}`,
-            background: "#fff",
-            color: C.ash,
-            fontWeight: 600,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 6,
-            cursor: "pointer",
-          }}
-        >
-          <RotateCcw size={15} /> Try again
-        </button>
+        {attemptsToday < MAX_ATTEMPTS_PER_DAY ? (
+          <button
+            onClick={onReplay}
+            style={{
+              flex: 1,
+              padding: "12px",
+              borderRadius: 12,
+              border: `1px solid ${C.creamDeep}`,
+              background: "#fff",
+              color: C.ash,
+              fontWeight: 600,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 6,
+              cursor: "pointer",
+            }}
+          >
+            <RotateCcw size={15} /> Try again
+          </button>
+        ) : (
+          <div
+            style={{
+              flex: 1,
+              padding: "12px",
+              borderRadius: 12,
+              border: `1px dashed ${C.creamDeep}`,
+              background: "#fff",
+              color: C.ash,
+              opacity: 0.7,
+              fontSize: 12,
+              textAlign: "center",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            🌙 Three tries today — let it settle overnight, come back fresh tomorrow.
+          </div>
+        )}
         <button
           onClick={onHome}
           style={{ flex: 1, padding: "12px", borderRadius: 12, border: "none", background: C.indigo, color: "#fff", fontWeight: 600, cursor: "pointer" }}
@@ -205,6 +242,10 @@ export default function ResultsScreen({ week, score, onReplay, onHome }) {
           Back to Yatra
         </button>
       </div>
+
+      <p style={{ textAlign: "center", fontSize: 11, color: C.ash, opacity: 0.5, marginTop: 12 }}>
+        The leaderboard always keeps your best score for this week — retaking can only help.
+      </p>
     </div>
   );
 }

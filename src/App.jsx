@@ -2,6 +2,7 @@ import React, { useState, useCallback, useEffect } from "react";
 import { WEEKS } from "./data/weeks";
 import { loadPlayer } from "./lib/player";
 import { recordVisit } from "./lib/stats";
+import { recordAttempt } from "./lib/attempts";
 import HomeScreen from "./components/HomeScreen";
 import StudyScreen from "./components/StudyScreen";
 import LeaderboardScreen from "./components/LeaderboardScreen";
@@ -32,10 +33,14 @@ export default function App() {
     setScreen("study");
   }, []);
 
-  const finishQuiz = useCallback((s) => {
-    setScore(s);
-    setScreen("results");
-  }, []);
+  const finishQuiz = useCallback(
+    (s) => {
+      recordAttempt(activeWeekId);
+      setScore(s);
+      setScreen("results");
+    },
+    [activeWeekId]
+  );
 
   return (
     <div
